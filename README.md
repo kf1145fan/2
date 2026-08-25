@@ -33,6 +33,25 @@ title: OpenList × ME-Frp 一体化控制台
     └── static/           # 前端页面
 ```
 
+## 零、本地一键启动（最简单，推荐先试）
+
+不需要 Docker、不需要魔搭，一条命令在本机跑起来：
+
+```bash
+pip install -r requirements.txt
+python3 start.py
+```
+
+脚本会自动确保 `bin/openlist` 与 `bin/mefrpc` 存在（缺失则从 GitHub / 镜像下载），
+然后拉起管理面板。浏览器打开 **http://localhost:7860** 即可。
+
+- 默认面板端口 `7860`，OpenList 在内部 `5244`，已由面板反代到 `/openlist/`
+- 没桌面环境也没关系：脚本默认 `DISABLE_GUI=1`，跳过 Firefox/VNC；想要网页版 Firefox 保温再去掉该变量并在有 X 环境时运行
+- 数据写在 `<项目>/data`（可用 `DATA_DIR` 环境变量改）
+- OpenList 管理员：账号 `admin`，初始密码 `admin123`（环境变量 `OPENLIST_ADMIN_PASSWORD` 可改）
+
+---
+
 ## 一、部署到魔搭创空间
 
 > ⚠️ **看不到 Docker 选项？** Docker 类型仅对**完成实名认证**的账号开放（需先绑定阿里云账号并做云账号实名认证；Gradio/Streamlit 不需要实名）。若创建时 SDK 类型里没有 Docker，先去账号设置做完实名，刷新页面就会出现。
