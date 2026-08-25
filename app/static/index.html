@@ -52,7 +52,7 @@
   <div class="card" id="card-openlist">
     <h2><span class="dot" id="d-openlist"></span>OpenList <span class="meta" id="v-openlist"></span></h2>
     <div class="meta">网盘列表程序 · 内部端口 5244<br>
-      面板入口：<a class="btn" style="padding:3px 10px;font-size:12px" href="/openlist/" target="_blank">/openlist/</a>
+      面板入口：<button class="btn" style="padding:3px 10px;font-size:12px" onclick="openFrame('/openlist/','OpenList')">/openlist/</button>
       根路径同样可用（如 <code>/@manage</code>、<code>/d/...</code>）<br>
       默认管理员密码：<code id="olpw">admin123</code>（可在环境变量修改）
     </div>
@@ -84,7 +84,7 @@
     <div class="meta">容器内运行的浏览器，通过 noVNC 在网页中操作，可用于保持空间活跃。</div>
     <div class="row"><input type="text" id="ff-url" placeholder="https://example.com" spellcheck="false"></div>
     <div class="row">
-      <button class="primary" id="ff-open" target="_blank" onclick="openFF()">打开 Firefox 窗口</button>
+      <button class="primary" id="ff-open" onclick="openFrame('/firefox/vnc_lite.html?path=firefox%2Fwebsockify&autoconnect=1&resize=scale','Firefox')">打开 Firefox 窗口</button>
       <button onclick="ffApply()">应用 URL 并重启</button>
       <button class="danger" onclick="ffAction('stop')">停止</button>
     </div>
@@ -106,6 +106,15 @@
   ⚠️ 本面板未设密码：请勿在公开空间存放敏感 token；数据目录随平台策略可能重置，重要配置请自行备份。
 </div>
 <div class="toast" id="toast"></div>
+
+<div id="overlay" style="display:none;position:fixed;inset:0;background:#0f1115;z-index:50;flex-direction:column">
+  <div style="display:flex;align-items:center;gap:12px;padding:8px 14px;border-bottom:1px solid var(--line)">
+    <b id="ov-title" style="color:var(--acc)"></b>
+    <span style="margin-left:auto"></span>
+    <button onclick="closeFrame()">✕ 关闭返回控制台</button>
+  </div>
+  <iframe id="ov-frame" style="flex:1;border:0;width:100%;background:#fff"></iframe>
+</div>
 
 <script>
 const $=id=>document.getElementById(id);
@@ -138,7 +147,8 @@ async function ffApply(){
   try{const r=await api('/_ctrl/firefox',{action:'restart',url:url||undefined});toast('Firefox 已重启');}catch(e){}
 }
 async function ffAction(a){try{await api('/_ctrl/firefox',{action:a});}catch(e){}}
-function openFF(){window.open('/firefox/vnc_lite.html?path=firefox%2Fwebsockify&autoconnect=1&resize=scale','_blank');}
+function openFrame(url,title){const o=document.getElementById('overlay');document.getElementById('ov-title').textContent=title;document.getElementById('ov-frame').src=url;o.style.display='flex';}
+function closeFrame(){const o=document.getElementById('overlay');o.style.display='none';document.getElementById('ov-frame').src='about:blank';}
 
 document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{
   document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
