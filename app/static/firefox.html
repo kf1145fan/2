@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>容器 Firefox 远程窗口</title>
+<style>
+  html,body{margin:0;height:100%;background:#0f1115;color:#e8eaf0;font-family:sans-serif;display:flex;flex-direction:column}
+  #bar{padding:8px 14px;font-size:13px;color:#8b93a7;display:flex;gap:14px;align-items:center}
+  #bar b{color:#6ea8fe}
+  #screen{flex:1}
+</style>
+</head>
+<body>
+<div id="bar">🖥 容器内 Firefox · <b id="st">连接中…</b><span style="margin-left:auto">Ctrl+Alt+Shift 呼出菜单</span></div>
+<div id="screen"></div>
+<script src="/firefox/core/rfb.js"></script>
+<script>
+const proto = location.protocol === 'https:' ? 'wss' : 'ws';
+const url = proto + '://' + location.host + '/firefox/websockify';
+const rfb = new RFB(document.getElementById('screen'), url, {scaleViewport: true, background: '#0f1115'});
+rfb.addEventListener('connect', () => document.getElementById('st').textContent = '已连接');
+rfb.addEventListener('disconnect', () => document.getElementById('st').textContent = '已断开，请刷新重试');
+</script>
+</body>
+</html>

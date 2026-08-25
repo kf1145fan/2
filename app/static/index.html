@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>OpenList × ME-Frp 控制台</title>
+<style>
+  :root{
+    --bg:#0f1115; --card:#171a21; --line:#262b36; --txt:#e8eaf0; --dim:#8b93a7;
+    --ok:#34d399; --bad:#f87171; --warn:#fbbf24; --acc:#6ea8fe; --acc2:#a78bfa;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--txt);font-family:-apple-system,"Segoe UI","Microsoft YaHei",sans-serif;padding:20px;max-width:1100px;margin:0 auto}
+  h1{font-size:20px;display:flex;align-items:center;gap:10px}
+  .sub{color:var(--dim);font-size:12px;margin-top:4px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:14px;margin-top:18px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px}
+  .card h2{font-size:14px;font-weight:600;display:flex;align-items:center;gap:8px;margin-bottom:12px}
+  .dot{width:9px;height:9px;border-radius:50%;background:var(--dim);flex:none}
+  .dot.ok{background:var(--ok);box-shadow:0 0 6px var(--ok)}
+  .dot.bad{background:var(--bad)}
+  .meta{color:var(--dim);font-size:12px;line-height:1.8}
+  .row{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+  input[type=text]{flex:1;min-width:160px;background:#0d0f13;border:1px solid var(--line);border-radius:8px;color:var(--txt);padding:8px 10px;font-size:13px;font-family:ui-monospace,Consolas,monospace}
+  input[type=text]:focus{outline:none;border-color:var(--acc)}
+  button{background:#232936;border:1px solid #323a4d;color:var(--txt);border-radius:8px;padding:8px 14px;font-size:13px;cursor:pointer;transition:.15s}
+  button:hover{border-color:var(--acc);color:var(--acc)}
+  button.primary{background:var(--acc);border-color:var(--acc);color:#0b1220;font-weight:600}
+  button.primary:hover{filter:brightness(1.1);color:#000}
+  button.danger:hover{border-color:var(--bad);color:var(--bad)}
+  label.chk{display:inline-flex;align-items:center;gap:6px;color:var(--dim);font-size:12px;cursor:pointer;user-select:none}
+  a.btn{text-decoration:none;background:#232936;border:1px solid #323a4d;color:var(--txt);border-radius:8px;padding:8px 14px;font-size:13px;display:inline-block;transition:.15s}
+  a.btn:hover{border-color:var(--acc);color:var(--acc)}
+  .logwrap{margin-top:18px;background:var(--card);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+  .logtabs{display:flex;gap:4px;padding:10px 12px;border-bottom:1px solid var(--line);align-items:center;flex-wrap:wrap}
+  .tab{padding:5px 12px;border-radius:7px;font-size:12px;color:var(--dim);cursor:pointer;border:1px solid transparent}
+  .tab.active{color:var(--acc);border-color:var(--acc);background:#141a28}
+  .logtabs .right{margin-left:auto;color:var(--dim);font-size:12px}
+  pre#log{height:340px;overflow:auto;padding:12px 14px;font-size:12px;line-height:1.55;font-family:ui-monospace,Consolas,monospace;white-space:pre-wrap;word-break:break-all;color:#c4cad8}
+  .foot{margin-top:16px;color:var(--dim);font-size:12px;line-height:1.8}
+  code{background:#0d0f13;padding:1px 6px;border-radius:5px;font-size:12px;color:var(--acc2)}
+  .toast{position:fixed;top:18px;left:50%;transform:translateX(-50%);background:#232936;border:1px solid var(--line);padding:9px 18px;border-radius:10px;font-size:13px;opacity:0;transition:.25s;pointer-events:none;z-index:9}
+  .toast.show{opacity:1}
+</style>
+</head>
+<body>
+<h1>🛰 OpenList × ME-Frp 控制台 <span id="overall" class="dot"></span></h1>
+<div class="sub">单容器集成面板 · 数据目录 <span id="datadir">…</span> · 端口 <span id="pport">7860</span></div>
+
+<div class="grid">
+  <!-- OpenList -->
+  <div class="card" id="card-openlist">
+    <h2><span class="dot" id="d-openlist"></span>OpenList <span class="meta" id="v-openlist"></span></h2>
+    <div class="meta">网盘列表程序 · 内部端口 5244<br>
+      面板入口：<a class="btn" style="padding:3px 10px;font-size:12px" href="/openlist/" target="_blank">/openlist/</a>
+      根路径同样可用（如 <code>/@manage</code>、<code>/d/...</code>）<br>
+      默认管理员密码：<code id="olpw">admin123</code>（可在环境变量修改）
+    </div>
+    <div class="row">
+      <button onclick="svc('openlist','restart')">重启</button>
+      <button class="danger" onclick="svc('openlist','stop')">停止</button>
+      <button onclick="svc('openlist','start')">启动</button>
+      <button onclick="showLog('openlist')">看日志</button>
+    </div>
+  </div>
+
+  <!-- ME-Frp -->
+  <div class="card">
+    <h2><span class="dot" id="d-mefrpc"></span>ME-Frp (mefrpc) <span class="meta" id="v-mefrpc"></span></h2>
+    <div class="meta">填入 ME Frp 官网生成的启动命令，例如：<br><code>./mefrpc -t 1937c3dc... -p 174053</code></div>
+    <div class="row"><input type="text" id="mef-cmd" placeholder="./mefrpc -t xxxxx -p xxxxx" spellcheck="false"></div>
+    <div class="row">
+      <button class="primary" onclick="mefStart()">启动</button>
+      <button class="danger" onclick="mefStop()">停止</button>
+      <button onclick="mefStart(true)">重启(保留命令)</button>
+      <label class="chk"><input type="checkbox" id="mef-auto" onchange="mefAuto(this.checked)">开机自启+崩溃自动重连</label>
+    </div>
+    <div class="meta" id="mef-state"></div>
+  </div>
+
+  <!-- Firefox VNC -->
+  <div class="card" id="card-ff">
+    <h2><span class="dot" id="d-firefox"></span>Firefox (网页版) <span class="meta">保活窗口</span></h2>
+    <div class="meta">容器内运行的浏览器，通过 noVNC 在网页中操作，可用于保持空间活跃。</div>
+    <div class="row"><input type="text" id="ff-url" placeholder="https://example.com" spellcheck="false"></div>
+    <div class="row">
+      <button class="primary" id="ff-open" target="_blank" onclick="openFF()">打开 Firefox 窗口</button>
+      <button onclick="ffApply()">应用 URL 并重启</button>
+      <button class="danger" onclick="ffAction('stop')">停止</button>
+    </div>
+  </div>
+</div>
+
+<div class="logwrap">
+  <div class="logtabs" id="tabs">
+    <span class="tab" data-t="system">系统</span>
+    <span class="tab active" data-t="mefrpc">mefrpc</span>
+    <span class="tab" data-t="openlist">OpenList</span>
+    <span class="tab" data-t="firefox">Firefox</span>
+    <span class="right"><label class="chk"><input type="checkbox" id="autoscroll" checked>自动滚动</label></span>
+  </div>
+  <pre id="log">加载中…</pre>
+</div>
+
+<div class="foot">
+  ⚠️ 本面板未设密码：请勿在公开空间存放敏感 token；数据目录随平台策略可能重置，重要配置请自行备份。
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+const $=id=>document.getElementById(id);
+let curLog='mefrpc', timer=null;
+
+function toast(m){const t=$('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2200);}
+async function api(url,body){
+  const r=await fetch(url,body?{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}:{method:'POST'});
+  if(!r.ok){toast((await r.text()).slice(0,120));throw new Error(r.status);}
+  return r.json();
+}
+function dot(id,running){const e=$(id);e.className='dot '+(running?'ok':'bad');}
+
+async function svc(name,action){try{await api('/_ctrl/service/'+name+'?action='+action);toast(name+' '+action+' 已发送');}catch(e){}}
+
+async function mefStart(keep){
+  let cmd;
+  if(keep){cmd=(S&&S.mefrpc&&S.mefrpc.cmd)||$('mef-cmd').value;}
+  else{
+    cmd=$('mef-cmd').value.trim();
+    if(!cmd)return toast('请先填写启动命令');
+  }
+  try{await api('/_ctrl/mefrpc/start',{cmd,autostart:$('mef-auto').checked});toast('mefrpc 启动中…');}catch(e){}
+}
+async function mefStop(){try{await api('/_ctrl/mefrpc/stop');toast('mefrpc 已停止');}catch(e){}}
+async function mefAuto(v){try{await api('/_ctrl/mefrpc/autostart',{enabled:v});}catch(e){}}
+
+async function ffApply(){
+  const url=$('ff-url').value.trim();
+  try{const r=await api('/_ctrl/firefox',{action:'restart',url:url||undefined});toast('Firefox 已重启');}catch(e){}
+}
+async function ffAction(a){try{await api('/_ctrl/firefox',{action:a});}catch(e){}}
+function openFF(){window.open('/firefox/vnc_lite.html?path=firefox%2Fwebsockify&autoconnect=1&resize=scale','_blank');}
+
+document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{
+  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+  t.classList.add('active');curLog=t.dataset.t;$('log').textContent='';
+});
+
+async function refreshLog(){
+  try{
+    const r=await fetch('/_ctrl/log/'+curLog+'?tail=400');
+    if(!r.ok)return;
+    const txt=await r.text();
+    const el=$('log');
+    el.textContent=txt||'(暂无日志)';
+    if($('autoscroll').checked)el.scrollTop=el.scrollHeight;
+  }catch(e){}
+}
+
+let S=null;
+async function refresh(){
+  try{
+    S=await (await fetch('/_ctrl/status')).json();
+    $('datadir').textContent=S.data_dir;
+    $('pport').textContent=S.panel_port;
+    $('v-openlist').textContent=S.versions.openlist;
+    $('v-mefrpc').textContent=S.versions.mefrpc;
+    dot('d-openlist',!!S.openlist_http);
+    dot('d-mefrpc',S.mefrpc&&S.mefrpc.running);
+    dot('d-firefox',S.have_gui&&S.services.firefox&&S.services.firefox.running);
+    $('overall').className='dot '+(S.openlist_http?'ok':'bad');
+    if(S.mefrpc){
+      if(document.activeElement!==$('mef-cmd')&&!$('mef-cmd').value)$('mef-cmd').value=S.mefrpc.cmd||'';
+      $('mef-auto').checked=!!S.mefrpc.autostart;
+      const st=S.mefrpc.running?'运行中 PID '+S.mefrpc.pid+(S.mefrpc.uptime?(' · '+Math.floor(S.mefrpc.uptime/60)+'分'+S.mefrpc.uptime%60+'秒'):''):'未运行';
+      $('mef-state').innerHTML='状态：'+st+(S.mefrpc.autostart?' · 自启已开启':'');
+    }
+    if(!$('ff-url').value&&S.ff_url)$('ff-url').value=S.ff_url;
+    if(!S.have_gui){$('card-ff').style.opacity=.55;$('ff-url').disabled=true;}
+  }catch(e){}
+}
+
+refresh();refreshLog();
+setInterval(refresh,2500);
+setInterval(refreshLog,2000);
+</script>
+</body>
+</html>
