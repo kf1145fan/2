@@ -71,7 +71,10 @@ def pick_data_dir():
 
 DATA_DIR = pick_data_dir()
 
+MEFRPC_BIN = _find_bin("mefrpc")
+FRPC_BIN = _find_bin("frpc")
 MEFRPC_CFG = DATA_DIR / "mefrpc.json"
+FRPC_CFG = DATA_DIR / "frpc.json"
 UI_CFG = DATA_DIR / "ui.json"
 
 HOP_HEADERS = {
@@ -274,6 +277,29 @@ def start_mefrpc(cmd=None, autostart=None):
     return st
 
 
+def start_frpc(config=None, autostart=None):
+    st = load_json(FRPC_CFG, {"config": "", "autostart": False})
+    if config is not None:
+        st["config"] = config
+    if autostart is not None:
+        st["autostart"] = bool(autostart)
+    if not st["config"].strip():
+        raise ValueError("请先填写 frp 的 TOML 配置")
+    if not FRPC_BIN or not os.path.exists(FRPC_BIN):
+        raise ValueError("frpc 二进制缺失，请确认已下载")
+    cfg_path = DATA_DIR / "frpc.toml"
+    cfg_path.write_text(st["config"])
+    save_json(FRPC_CFG, st)
+    argv = [FRPC_BIN, "-c", str(cfg_path)]
+    old = PROCS.pop("frpc", None)
+    if old:
+        old.stop()
+    PROCS["frpc"] = CmdProc("frpc", argv, supervised=st["autostart"])
+    SYSTEM_LOG.log("启动 frpc (原版)")
+    PROCS["frpc"].start()
+    return st
+
+
 def firefox_url():
     return load_json(UI_CFG, {}).get("firefox_url") or FIREFOX_URL_DEFAULT
 
@@ -465,9 +491,12 @@ async def api_status(request):
         "openlist_addr": f"/openlist/",
         "firefox_console": "/_ctrl/firefox_console",
         "mefrpc": {**mefrpc_state(), **PROCS.get("mefrpc", Proc("mefrpc")).status()},
+        "frpc": {**load_json(FRPC_CFG, {"config": "", "autostart": False}),
+                 **PROCS.get("frpc", Proc("frpc")).status()},
         "versions": {
             "openlist": get_version("openlist", [OPENLIST_BIN, "version"]),
             "mefrpc": get_version("mefrpc", [MENFRPC_BIN, "-v"]),
+            "frpc": get_version("frpc", [FRPC_BIN, "-v"]) if FRPC_BIN else "缺失",
         },
         "data_dir": str(DATA_DIR),
         "panel_port": PANEL_PORT,
@@ -557,6 +586,35 @@ async def api_firefox(request):
     return web.json_response({"firefox": p.status(), "url": firefox_url()})
 
 
+async def api_frpc_start(request):
+    body = await request.json()
+    try:
+        st = start_frpc(body.get("config"), body.get("autostart"))
+    except ValueError as e:
+        return web.HTTPBadRequest(text=str(e))
+    except json.JSONDecodeError:
+        return web.HTTPBadRequest(text="invalid json")
+    return web.json_response({**st, **PROCS["frpc"].status()})
+
+
+async def api_frpc_stop(_):
+    p = PROCS.get("frpc")
+    if p:
+        p.supervised = False
+        p.stop()
+    return web.json_response({"ok": True})
+
+
+async def api_frpc_autostart(request):
+    body = await request.json()
+    st = load_json(FRPC_CFG, {"config": "", "autostart": False})
+    st["autostart"] = bool(body.get("enabled"))
+    save_json(FRPC_CFG, st)
+    if "frpc" in PROCS:
+        PROCS["frpc"].supervised = st["autostart"]
+    return web.json_response(st)
+
+
 # ---------------------------------------------------------------- app setup
 async def on_startup(app):
     global CLIENT
@@ -576,6 +634,13 @@ async def on_startup(app):
             start_mefrpc(st["cmd"], st["autostart"])
         except ValueError as e:
             SYSTEM_LOG.log(f"mefrpc 自启失败: {e}")
+    fst = load_json(FRPC_CFG, {})
+    if fst.get("config", "").strip() and fst.get("autostart"):
+        SYSTEM_LOG.log("[boot] autostart frpc")
+        try:
+            start_frpc(fst["config"], fst["autostart"])
+        except ValueError as e:
+            SYSTEM_LOG.log(f"frpc 自启失败: {e}")
     app["supervisor"] = asyncio.create_task(supervisor())
 
 
@@ -609,6 +674,9 @@ def build_app():
     app.router.add_post("/_ctrl/mefrpc/start", api_mefrpc_start)
     app.router.add_post("/_ctrl/mefrpc/stop", api_mefrpc_stop)
     app.router.add_post("/_ctrl/mefrpc/autostart", api_mefrpc_autostart)
+    app.router.add_post("/_ctrl/frpc/start", api_frpc_start)
+    app.router.add_post("/_ctrl/frpc/stop", api_frpc_stop)
+    app.router.add_post("/_ctrl/frpc/autostart", api_frpc_autostart)
     app.router.add_post("/_ctrl/firefox", api_firefox)
 
     # noVNC 反代 (含 WebSocket)

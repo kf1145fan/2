@@ -24,7 +24,8 @@ WORKDIR /app
 COPY app/ /app/
 COPY bin/mefrpc /app/mefrpc
 COPY bin/openlist /app/openlist
-RUN chmod +x /app/mefrpc /app/openlist /app/entrypoint.sh
+COPY bin/frpc /app/frpc
+RUN chmod +x /app/mefrpc /app/openlist /app/frpc /app/entrypoint.sh
 
 ENV PANEL_PORT=7860 \
     OPENLIST_PORT=5244 \

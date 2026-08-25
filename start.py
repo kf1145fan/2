@@ -25,6 +25,7 @@ OPENLIST_BIN = os.path.join(BIN, "openlist")
 MEFRPC_BIN = os.path.join(BIN, "mefrpc")
 ARCH = "amd64"
 OPENLIST_VERSION = os.environ.get("OPENLIST_VERSION", "v4.2.5")
+FRPC_VERSION = os.environ.get("FRPC_VERSION", "v0.71.0")
 
 
 def _log(msg):
@@ -90,9 +91,28 @@ def ensure_mefrpc():
     )
 
 
+def ensure_frpc():
+    if os.path.exists(FRPC_BIN) and os.path.getsize(FRPC_BIN) > 1_000_000:
+        _log("frpc 已存在，跳过下载")
+        return
+    url = f"https://github.com/fatedier/frp/releases/download/{FRPC_VERSION}/frp_{FRPC_VERSION}_linux-{ARCH}.tar.gz"
+    tgz = os.path.join(BIN, "frp.tar.gz")
+    download(url, tgz)
+    with tarfile.open(tgz) as t:
+        for m in t.getmembers():
+            if m.name.endswith("/frpc"):
+                m.name = "frpc"
+                t.extract(m, BIN)
+                break
+    os.chmod(FRPC_BIN, 0o755)
+    os.remove(tgz)
+    _log(f"frpc 已就绪（{FRPC_VERSION}）")
+
+
 def main():
     ensure_openlist()
     ensure_mefrpc()
+    ensure_frpc()
 
     env = dict(os.environ)
     env.setdefault("DISABLE_GUI", "1")  # 本地无桌面环境时跳过 Firefox/VNC
