@@ -38,6 +38,7 @@ MENFRPC_BIN = _find_bin("mefrpc")
 OPENLIST_BIN = _find_bin("openlist")
 
 PANEL_PORT = int(os.environ.get("PANEL_PORT", "7860"))
+OPENLIST_DATA = os.environ.get("OPENLIST_DATA", "/www/1/data")
 OPENLIST_PORT = int(os.environ.get("OPENLIST_PORT", "5244"))
 NOVNC_PORT = 6080
 VNC_PORT = 5900
@@ -63,6 +64,12 @@ def pick_data_dir():
             probe.unlink()
             (p / "openlist").mkdir(exist_ok=True)
             (p / "logs").mkdir(exist_ok=True)
+            # openlist 数据目录指向 /www/1/data（宿主机已有 data.db）
+            ol_data = Path("/www/1/data")
+            try:
+                ol_data.mkdir(parents=True, exist_ok=True)
+            except Exception:
+                pass
             return p
         except Exception:
             continue
@@ -229,7 +236,7 @@ if HAVE_GUI:
     )
 PROCS["openlist"] = CmdProc(
     "openlist",
-    [OPENLIST_BIN, "server", "--data", str(DATA_DIR / "openlist")],
+    [OPENLIST_BIN, "server", "--data", OPENLIST_DATA],
     supervised=True,
 )
 
@@ -355,7 +362,7 @@ async def supervisor():
                 try:
                     r = subprocess.run(
                         [OPENLIST_BIN, "admin", "set", ADMIN_PASSWORD,
-                         "--data", str(DATA_DIR / "openlist")],
+                         "--data", OPENLIST_DATA],
                         capture_output=True, text=True, timeout=30,
                     )
                     SYSTEM_LOG.log(
