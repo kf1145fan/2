@@ -45,7 +45,7 @@
 </style>
 </head>
 <body>
-<h1>🛰 OpenList × ME-Frp 控制台 <span id="overall" class="dot"></span></h1>
+<h1>OpenList × ME-Frp 控制台 <span id="overall" class="dot"></span></h1>
 <div class="sub">单容器集成面板 · 数据目录 <span id="datadir">…</span> · 端口 <span id="pport">7860</span></div>
 
 <div class="grid">
@@ -79,7 +79,6 @@
         <button class="primary" onclick="mefStart()">启动</button>
         <button class="danger" onclick="mefStop()">停止</button>
         <button onclick="mefStart(true)">重启</button>
-        <label class="chk"><input type="checkbox" id="mef-auto" onchange="mefAuto(this.checked)">开机自启</label>
       </div>
       <div class="meta" id="mef-state"></div>
     </div>
@@ -90,7 +89,6 @@
         <button class="primary" onclick="frpStart()">启动</button>
         <button class="danger" onclick="frpStop()">停止</button>
         <button onclick="frpStart(true)">重启</button>
-        <label class="chk"><input type="checkbox" id="frp-auto" onchange="frpAuto(this.checked)">开机自启</label>
       </div>
       <div class="meta" id="frp-state"></div>
     </div>
@@ -156,10 +154,9 @@ async function mefStart(keep){
     cmd=$('mef-cmd').value.trim();
     if(!cmd)return toast('请先填写启动命令');
   }
-  try{await api('/_ctrl/mefrpc/start',{cmd,autostart:$('mef-auto').checked});toast('mefrpc 启动中…');}catch(e){}
+  try{await api('/_ctrl/mefrpc/start',{cmd});toast('mefrpc 启动中…');}catch(e){}
 }
 async function mefStop(){try{await api('/_ctrl/mefrpc/stop');toast('mefrpc 已停止');}catch(e){}}
-async function mefAuto(v){try{await api('/_ctrl/mefrpc/autostart',{enabled:v});}catch(e){}}
 
 let mode='mefrpc';
 function setMode(m){
@@ -176,10 +173,9 @@ async function frpStart(keep){
     cfg=$('frp-cfg').value;
     if(!cfg.trim())return toast('请先填写 frp 配置');
   }
-  try{await api('/_ctrl/frpc/start',{config:cfg,autostart:$('frp-auto').checked});toast('frpc 启动中…');}catch(e){}
+  try{await api('/_ctrl/frpc/start',{config:cfg});toast('frpc 启动中…');}catch(e){}
 }
 async function frpStop(){try{await api('/_ctrl/frpc/stop');toast('frpc 已停止');}catch(e){}}
-async function frpAuto(v){try{await api('/_ctrl/frpc/autostart',{enabled:v});}catch(e){}}
 
 async function ffApply(){
   const url=$('ff-url').value.trim();
@@ -219,15 +215,13 @@ async function refresh(){
     $('overall').className='dot '+(S.openlist_http?'ok':'bad');
     if(S.mefrpc){
       if(document.activeElement!==$('mef-cmd')&&!$('mef-cmd').value)$('mef-cmd').value=S.mefrpc.cmd||'';
-      $('mef-auto').checked=!!S.mefrpc.autostart;
       const st=S.mefrpc.running?'运行中 PID '+S.mefrpc.pid+(S.mefrpc.uptime?(' · '+Math.floor(S.mefrpc.uptime/60)+'分'+S.mefrpc.uptime%60+'秒'):''):'未运行';
-      $('mef-state').innerHTML='状态：'+st+(S.mefrpc.autostart?' · 自启已开启':'');
+      $('mef-state').innerHTML='状态：'+st;
     }
     if(S.frpc){
       if(document.activeElement!==$('frp-cfg')&&!$('frp-cfg').value)$('frp-cfg').value=S.frpc.config||'';
-      $('frp-auto').checked=!!S.frpc.autostart;
       const st=S.frpc.running?'运行中 PID '+S.frpc.pid:('未运行'+(S.versions.frpc?'':' · 未安装 frpc'));
-      $('frp-state').innerHTML='状态：'+st+(S.frpc.autostart?' · 自启已开启':'');
+      $('frp-state').innerHTML='状态：'+st;
     }
     if(!$('ff-url').value&&S.ff_url)$('ff-url').value=S.ff_url;
     if(!S.have_gui){$('card-ff').style.opacity=.55;$('ff-url').disabled=true;}

@@ -560,8 +560,6 @@ async def api_mefrpc_autostart(request):
     st = mefrpc_state()
     st["autostart"] = bool(body.get("enabled"))
     save_json(MEFRPC_CFG, st)
-    if "mefrpc" in PROCS:
-        PROCS["mefrpc"].supervised = st["autostart"]
     return web.json_response(st)
 
 
@@ -628,20 +626,6 @@ async def on_startup(app):
         await asyncio.sleep(0.5)
         PROCS["firefox"].start()
     PROCS["openlist"].start()
-    st = mefrpc_state()
-    if st.get("cmd") and st.get("autostart"):
-        SYSTEM_LOG.log("[boot] autostart mefrpc")
-        try:
-            start_mefrpc(st["cmd"], st["autostart"])
-        except ValueError as e:
-            SYSTEM_LOG.log(f"mefrpc 自启失败: {e}")
-    fst = load_json(FRPC_CFG, {})
-    if fst.get("config", "").strip() and fst.get("autostart"):
-        SYSTEM_LOG.log("[boot] autostart frpc")
-        try:
-            start_frpc(fst["config"], fst["autostart"])
-        except ValueError as e:
-            SYSTEM_LOG.log(f"frpc 自启失败: {e}")
     app["supervisor"] = asyncio.create_task(supervisor())
 
 
