@@ -11,7 +11,7 @@ mkdir -p "${OPENLIST_DATA}" 2>/dev/null || true
 
 # 1. 先启动一次 openlist 初始化
 echo "[entrypoint] 启动 openlist 初始化…"
-/usr/local/bin/openlist server --data "${OPENLIST_DATA}" --port 5244 &
+/usr/local/bin/openlist server --data "${OPENLIST_DATA}" &
 OL_PID=$!
 for i in $(seq 1 30); do
     if curl -sf "http://127.0.0.1:5244/ping" >/dev/null 2>&1; then
