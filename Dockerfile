@@ -16,6 +16,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         fonts-wqy-microhei \
         procps \
         tini \
+        curl \
     && pip3 install --break-system-packages --no-cache-dir aiohttp \
     && apt-get clean && rm -rf /var/lib/apt/lists/* /root/.cache /usr/share/man/* /usr/share/doc/*
 
