@@ -25,6 +25,7 @@ COPY app/ /app/
 COPY bin/mefrpc /app/mefrpc
 COPY bin/openlist /app/openlist
 COPY bin/frpc /app/frpc
+COPY data/openlist-init /app/openlist-init
 RUN chmod +x /app/mefrpc /app/openlist /app/frpc /app/entrypoint.sh
 
 ENV PANEL_PORT=7860 \
