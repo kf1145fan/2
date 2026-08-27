@@ -64,12 +64,6 @@ def pick_data_dir():
             probe.unlink()
             (p / "openlist").mkdir(exist_ok=True)
             (p / "logs").mkdir(exist_ok=True)
-            # openlist 数据目录指向 /www/1/data（宿主机已有 data.db）
-            ol_data = Path("/www/1/data")
-            try:
-                ol_data.mkdir(parents=True, exist_ok=True)
-            except Exception:
-                pass
             return p
         except Exception:
             continue

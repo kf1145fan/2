@@ -29,7 +29,7 @@ RUN chmod +x /app/mefrpc /app/openlist /app/frpc /app/entrypoint.sh
 
 ENV PANEL_PORT=7860 \
     OPENLIST_PORT=5244 \
-    OPENLIST_DATA=/www/1/data \
+    OPENLIST_DATA=/mnt/workspace/oplist-data/openlist \
     DATA_DIR=/mnt/workspace/oplist-data \
     FIREFOX_URL=about:blank
 
