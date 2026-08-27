@@ -230,7 +230,7 @@ if HAVE_GUI:
     )
 PROCS["openlist"] = CmdProc(
     "openlist",
-    [OPENLIST_BIN, "server", "--data", OPENLIST_DATA],
+    [OPENLIST_BIN, "server", "--data", OPENLIST_DATA, "--port", str(OPENLIST_PORT)],
     supervised=True,
 )
 
