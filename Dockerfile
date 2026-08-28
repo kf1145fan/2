@@ -14,6 +14,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         websockify \
         firefox-esr \
         fonts-wqy-microhei \
+        xauth \
         procps \
         tini \
         curl \

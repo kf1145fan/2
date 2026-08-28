@@ -31,7 +31,8 @@
     "unix_file": "",
     "unix_file_perm": "",
     "enable_h2c": false,
-    "enable_h3": false
+    "enable_h3": false,
+    "site_url": ""
   },
   "temp_dir": "data/temp",
   "bleve_dir": "data/bleve",
