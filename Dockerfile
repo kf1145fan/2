@@ -39,6 +39,6 @@ ENV PANEL_PORT=7860 \
     DATA_DIR=/mnt/workspace/oplist-data \
     FIREFOX_URL=about:blank
 
-EXPOSE 7860
+EXPOSE 7860 5244
 
 ENTRYPOINT ["/usr/bin/tini", "--", "/bin/bash", "/app/entrypoint.sh"]
