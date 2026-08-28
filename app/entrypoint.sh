@@ -21,12 +21,15 @@ for i in $(seq 1 30); do
     sleep 0.5
 done
 
-# 2. 停掉，替换 data.db
+# 2. 停掉
 kill "${OL_PID}" 2>/dev/null; wait "${OL_PID}" 2>/dev/null
-echo "[entrypoint] 替换 data.db…"
-cp -f /www/1/data/data.db "${OPENLIST_DIR}/data/data.db" 2>/dev/null || \
-cp -f /www/1/data/data.db "${OPENLIST_DIR}/data.db" 2>/dev/null || \
-echo "[entrypoint] 警告: 未找到 data.db 替换源"
 
-# 3. 正式启动
+# 3. 替换 data.db（用镜像内自带的那份）
+echo "[entrypoint] 替换 data.db…"
+ls -la /app/openlist-init/ 2>/dev/null
+cp -f /app/openlist-init/data.db "${OPENLIST_DIR}/data/data.db"
+echo "[entrypoint] 替换完成，校验："
+md5sum "${OPENLIST_DIR}/data/data.db" /app/openlist-init/data.db
+
+# 4. 正式启动
 exec python3 /app/main.py
