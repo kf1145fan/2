@@ -15,6 +15,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         firefox-esr \
         fonts-wqy-microhei \
         xauth \
+        dbus-x11 \
+        libegl1 \
+        libgl1 \
         procps \
         tini \
         curl \

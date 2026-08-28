@@ -398,7 +398,9 @@ async def relay(req, base, path):
                 if lk in ("transfer-encoding", "connection", "keep-alive"):
                     continue
                 if lk == "set-cookie":
-                    resp.headers.add(k, v)
+                    import re
+                    v2 = re.sub(r'(?i);\s*Domain=[^;]*', '', v)
+                    resp.headers.add(k, v2)
                 else:
                     resp.headers[k] = v
             await resp.prepare(req)
