@@ -38,7 +38,7 @@ MENFRPC_BIN = _find_bin("mefrpc")
 OPENLIST_BIN = _find_bin("openlist")
 
 PANEL_PORT = int(os.environ.get("PANEL_PORT", "7860"))
-OPENLIST_DATA = os.environ.get("OPENLIST_DATA", "/www/1/data")
+OPENLIST_DATA = os.environ.get("OPENLIST_DATA", "/root/Desktop/openlist")
 OPENLIST_PORT = int(os.environ.get("OPENLIST_PORT", "5244"))
 NOVNC_PORT = 6080
 VNC_PORT = 5900
