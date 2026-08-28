@@ -310,7 +310,8 @@ def set_firefox_url(url):
     cfg["firefox_url"] = url
     save_json(UI_CFG, cfg)
     if "firefox" in PROCS:
-        PROCS["firefox"].argv = ["firefox-esr", "--no-remote", "--kiosk", url]
+        PROCS["firefox"].argv = ["xvfb-run", "-n", "99", "-s", "-screen 0 1280x800x24",
+                                 "firefox-esr", "--no-remote", "--kiosk", url]
 
 
 VERSION_CACHE = {}
@@ -400,6 +401,8 @@ async def relay(req, base, path):
                 if lk == "set-cookie":
                     import re
                     v2 = re.sub(r'(?i);\s*Domain=[^;]*', '', v)
+                    v2 = re.sub(r'(?i);\s*SameSite=\w+', '', v2)
+                    v2 += '; SameSite=None; Secure'
                     resp.headers.add(k, v2)
                 else:
                     resp.headers[k] = v
