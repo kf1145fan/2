@@ -21,16 +21,19 @@ for i in $(seq 1 30); do
 done
 
 # 2. 彻底杀掉
-echo "[entrypoint] 停止 openlist (pid=${OL_PID})…"
 kill -9 "${OL_PID}" 2>/dev/null || true
 pkill -9 -f "openlist server" 2>/dev/null || true
 sleep 1
 
-# 3. 替换 data.db
+# 3. 确认目录结构并替换 data.db
+echo "[entrypoint] openlist目录:"
+ls -la "${OPENLIST_DIR}/"
+echo "[entrypoint] openlist/data目录:"
+ls -la "${OPENLIST_DIR}/data/" 2>/dev/null || echo "(不存在)"
 mkdir -p "${OPENLIST_DIR}/data"
-echo "[entrypoint] 替换前: $(ls -la ${OPENLIST_DIR}/data/data.db 2>&1)"
 cp -f /app/openlist-init/data.db "${OPENLIST_DIR}/data/data.db"
-echo "[entrypoint] 替换后: $(ls -la ${OPENLIST_DIR}/data/data.db)"
+echo "[entrypoint] 替换完成:"
+ls -la "${OPENLIST_DIR}/data/data.db"
 md5sum /app/openlist-init/data.db "${OPENLIST_DIR}/data/data.db"
 
 # 4. 正式启动
