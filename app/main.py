@@ -98,7 +98,7 @@ def which(*names):
 
 HAVE_GUI = (
     os.environ.get("DISABLE_GUI", "0") != "1"
-    and all(which(x) for x in ("xvfb-run", "x11vnc", "websockify", "firefox-esr"))
+    and all(which(x) for x in ("Xvfb", "x11vnc", "websockify", "firefox-esr"))
 )
 
 
@@ -210,6 +210,8 @@ class CmdProc(Proc):
 # ---------------------------------------------------------------- services
 PROCS = {}
 if HAVE_GUI:
+    PROCS["xvfb"] = CmdProc("xvfb", ["Xvfb", ":99", "-screen", "0", "1280x800x24", "-nolisten", "tcp"], supervised=True)
+    PROCS["fluxbox"] = CmdProc("fluxbox", ["fluxbox"], env={"DISPLAY": ":99"}, supervised=True)
     PROCS["x11vnc"] = CmdProc(
         "x11vnc",
         ["x11vnc", "-display", ":99", "-forever", "-nopw", "-quiet", "-noxdamage",
@@ -223,9 +225,8 @@ if HAVE_GUI:
     )
     PROCS["firefox"] = CmdProc(
         "firefox",
-        ["xvfb-run", "-n", "99", "-s", "-screen 0 1280x800x24",
-         "firefox-esr", "--no-remote", "--kiosk", FIREFOX_URL_DEFAULT],
-        env={"MOZ_ALLOW_RUN_AS_ROOT": "1", "MOZ_DISABLE_CONTENT_SANDBOX": "1"},
+        ["firefox-esr", "--no-remote", "--kiosk", FIREFOX_URL_DEFAULT],
+        env={"DISPLAY": ":99", "MOZ_ALLOW_RUN_AS_ROOT": "1", "MOZ_DISABLE_CONTENT_SANDBOX": "1"},
         supervised=True,
     )
 PROCS["openlist"] = CmdProc(
@@ -310,8 +311,7 @@ def set_firefox_url(url):
     cfg["firefox_url"] = url
     save_json(UI_CFG, cfg)
     if "firefox" in PROCS:
-        PROCS["firefox"].argv = ["xvfb-run", "-n", "99", "-s", "-screen 0 1280x800x24",
-                                 "firefox-esr", "--no-remote", "--kiosk", url]
+        PROCS["firefox"].argv = ["firefox-esr", "--no-remote", "--kiosk", url]
 
 
 VERSION_CACHE = {}
@@ -620,6 +620,10 @@ async def on_startup(app):
     global CLIENT
     CLIENT = ClientSession()
     if HAVE_GUI:
+        PROCS["xvfb"].start()
+        await asyncio.sleep(1)
+        PROCS["fluxbox"].start()
+        await asyncio.sleep(0.5)
         PROCS["x11vnc"].start()
         PROCS["novnc"].start()
         await asyncio.sleep(0.5)

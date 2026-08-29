@@ -13,6 +13,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         novnc \
         websockify \
         firefox-esr \
+        fluxbox \
         fonts-wqy-microhei \
         xauth \
         dbus-x11 \
